@@ -14,7 +14,7 @@ SEC_AUTH_RES_CMD = 1
 SEC_CON_REQ_CMD = 2
 SEC_CON_RES_CMD = 3
 
-sec_server_address = '127.0.0.1'
+sec_server_address = '0.0.0.0'
 sec_server_port = 9022
 
 
