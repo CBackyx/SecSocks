@@ -15,7 +15,7 @@ SEC_CON_REQ_CMD = 2
 SEC_CON_RES_CMD = 3
 
 sec_server_address = '127.0.0.1'
-sec_server_port = 9022
+sec_server_port = 9033
 
 
 class ThreadingTCPServer(ThreadingMixIn, TCPServer):
@@ -33,8 +33,6 @@ class SecSocksProxy(StreamRequestHandler):
         self.s_arr = ""
 
         logging.info('Accepting connection from %s:%s' % self.client_address)
-
-        self.listenport = self.connection.getpeername()[1]
 
         # user登录验证，协商session key
         if not self.verify_credentials():
@@ -117,7 +115,7 @@ class SecSocksProxy(StreamRequestHandler):
         
         # 生成s_arr
         self.s_key = "".join([chr(x) for x in self.s_key])
-        # print("s_key ", self.s_key[:20])
+        print("s_key ", self.s_key[:20])
         self.s_arr = get_s_arr(self.s_key)
 
         username = username.decode('utf-8')
@@ -149,14 +147,14 @@ class SecSocksProxy(StreamRequestHandler):
 
             if client in r:
                 data = client.recv(4096)
-                # print("data", len(data))
+                print("data", len(data))
                 data = self.do_pf_decrypt(data)
                 if remote.send(data) <= 0:
                     break
 
             if remote in r:
                 data = remote.recv(4096)
-                # print("data", len(data))
+                print("data", len(data))
                 data = self.do_pf_encrypt(data)
                 if client.send(data) <= 0:
                     break
@@ -166,8 +164,8 @@ class SecSocksProxy(StreamRequestHandler):
         text_len = int(len(sec_request) / 2)
         if text_len == 0:
             return
-        # print(len(sec_request))
-        # print(text_len)
+        print(len(sec_request))
+        print(text_len)
         sec_request = struct.unpack("!" + "H"*text_len, sec_request)
         sec_request = rsa_decrypt(sec_request)
         sec_request = struct.pack("!" + "Q"*text_len, *sec_request)
@@ -178,24 +176,25 @@ class SecSocksProxy(StreamRequestHandler):
         text_len = int(len(sec_response) / 8)
         if text_len == 0:
             return
-        # print(text_len)
-        # print(len(sec_response))
+        print(text_len)
+        print(len(sec_response))
         sec_response = struct.unpack("!" + "Q"*text_len, sec_response)
         sec_response = rsa_decrypt(sec_response)
         sec_response = struct.pack("!" + "H"*text_len, *sec_response)
         return sec_response
 
     def do_pf_encrypt(self, data):
-        # print(data)
+        print(data)
         data = pf_crypt(data, self.s_arr)
-        # print(data)
+        print(data)
         return data
 
     def do_pf_decrypt(self, data):
-        # print(data)
-        # print("listening port: ", self.listenport, "s_key ", self.s_key, "len_key ", len(self.s_key), self.s_arr[:20], get_s_arr(self.s_key)[:20], "test ", pf_crypt(b'\x02\x01', self.s_arr))
+        print(data)
+        print("s_key ", self.s_key[:20])
+        print("test ", pf_crypt(b'\x02\x01', self.s_arr))
         data = pf_crypt(data, self.s_arr)
-        # print(data)
+        print(data)
         return data
 
 if __name__ == '__main__':

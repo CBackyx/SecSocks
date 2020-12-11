@@ -79,8 +79,7 @@ class SocksProxy(StreamRequestHandler):
             self.server.close_request(self.request)
             return
 
-        print("listening port: ", sec_remote.getsockname()[1])
-        self.listenport = sec_remote.getsockname()[1]
+        print("listening port: ", sock.getsockname()[1])
 
         # send welcome message
         self.connection.sendall(struct.pack("!BB", SOCKS_VERSION, 0))            
@@ -183,63 +182,20 @@ class SocksProxy(StreamRequestHandler):
         sec_remote.close()
         return False
 
-    def exchange_loop(self, client, remote):
-
-        while True:
-
-            # wait until client or remote is available for read
-            r, w, e = select.select([client, remote], [], [])
-
-            if client in r:
-                data = client.recv(4096)
-                # print("data", len(data))
-                data = self.do_pf_encrypt(data)
-                if remote.send(data) <= 0:
-                    break
-
-            if remote in r:
-                data = remote.recv(4096)
-                # print("data", len(data))
-                data = self.do_pf_decrypt(data)
-                if client.send(data) <= 0:
-                    break
-
-    # input and output are bytes
-    def do_rsa_encrypt(self, sec_request):
-        text_len = int(len(sec_request) / 2)
-        if text_len == 0:
-            return
-        # print(len(sec_request))
-        # print(text_len)
-        sec_request = struct.unpack("!" + "H"*text_len, sec_request)
-        sec_request = rsa_encrypt(sec_request)
-        sec_request = struct.pack("!" + "Q"*text_len, *sec_request)
-        return sec_request
-
-    # input and output are bytes
-    def do_rsa_decrypt(self, sec_response):
-        text_len = int(len(sec_response) / 8)
-        if text_len == 0:
-            return
-        # print(len(sec_response))
-        # print(text_len)
-        sec_response = struct.unpack("!" + "Q"*text_len, sec_response)
-        sec_response = rsa_encrypt(sec_response) # use public key to encrypt is also decrypt
-        sec_response = struct.pack("!" + "H"*text_len, *sec_response)
-        return sec_response
 
     def do_pf_encrypt(self, data):
-        # print(data)
-        # print("listening port: ", self.listenport, "s_key ", self.s_key, "len_key ", len(self.s_key), self.s_arr[:20], get_s_arr(self.s_key)[:20], "test ", pf_crypt(b'\x02\x01', self.s_arr))
+        print(data)
+        print("s_key ", self.s_key[:20])
+        print("test ", pf_crypt(b'\x02\x01', self.s_arr))
         data = pf_crypt(data, self.s_arr)
-        # print(data)
+        print(data)
         return data
         
 
     def do_pf_decrypt(self, data):
-        # print(data)
+        print(data)
         data = pf_crypt(data, self.s_arr)
-        # print(data)
+        print(data)
         return data
         
 

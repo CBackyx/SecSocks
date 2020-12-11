@@ -67,9 +67,9 @@ CONNECT请求？BIND操作？
 * client发起连接，身份验证(用配置的server公钥加密)
   * key由client随机生成
 
-| CMD(1 byte) | ulen(1 byte) | username(1 - 255 byte) | plen(1 byte) | password(1 - 255byte) | klen(1 byte) | key(1 - 255byte) |
-| ----------- | ------------ | ---------------------- | ------------ | --------------------- | ------------ | ---------------- |
-| 0           |              |                        |              |                       |              |                  |
+| CMD(1 byte) | ulen(1 byte) | plen(1 byte) | klen(1 byte) | username(1 - 255byte) | password(1 - 255byte) | key(1 - 255byte) |
+| ----------- | ------------ | ------------ | ------------ | --------------------- | --------------------- | ---------------- |
+| 0           |              |              |              |                       |                       |                  |
 
 * server验证身份，返回结果
 
@@ -79,9 +79,13 @@ CONNECT请求？BIND操作？
 
 * client请求连接Web服务
 
-| CMD(1 byte) | atype(1 byte)              | alen(1 byte) | addr(1 - 255 byte) | port(2 byte) |
-| ----------- | -------------------------- | ------------ | ------------------ | ------------ |
-| 2           | 0(IPV4地址)，1(DOMAINNAME) |              |                    |              |
+| CMD(1 byte) | atype(1 byte) | addr(1 - 255 byte) | port(2 byte) |
+| ----------- | ------------- | ------------------ | ------------ |
+| 2           | 0(IPV4地址)   |                    |              |
+
+| CMD(1 byte) | atype(1 byte) | alen(1 byte) | padding(1 byte) | addr(1 - 255 byte) | port(2 byte) |
+| ----------- | ------------- | ------------ | --------------- | ------------------ | ------------ |
+| 2           | 1(DOMAINNAME) |              |                 |                    |              |
 
 * server返回连接成功或失败
 
@@ -107,7 +111,31 @@ struct.unpack收到的其实是一个triple
 
 
 
+## 加解密算法
 
+pip install pycryptodome
+
+a = struct.pack("!Q", 2**64-2) 
+b = struct.unpack("!Q", a)
+
+```
+import struct
+
+count = len(barray)/2
+integers = struct.unpack('H'*count, barray)
+```
+
+str to bytes
+
+char array to bytes
+
+bytes to char array
+
+"".join([chr(x) for x in a])
+
+struct.pack("!" + "B"*len(a), *[int(x) for x in a])
+
+ord('a')
 
 ## Fresh words
 
