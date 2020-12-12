@@ -1,6 +1,6 @@
 # Lab5 Report
 
-* 计72 邹振华 2017011464
+* 计72 周炫柏 2017011460
 
 
 
@@ -97,6 +97,233 @@ SecSocks Client中配置有SecSocks Server的公钥，SecSocks握手请求使用
 
 ## 5 加解密算法设计与实现
 
+**非对称加密部分使用的是RSA算法，实现逻辑主要参考了附录中链接的内容。**
+
+* RSA算法要求找到两个不同的大整数P、Q，令N=P*Q，再从0开始找到第一个与N互质的数e，则得到公钥（N,e）。然后通过欧拉公式
+
+$$
+Φ(N)=Φ(P)*Φ(Q)=(P-1)(Q-1)
+$$
+
+得到Φ(N)，找到满足
+$$
+ed≡1(modφ(N))
+$$
+的整数d，d称为e关于Φ(N)的模反元素，得到密钥（N,d）。由上述de关系可知存在
+$$
+\forall m, m^{ed}≡mmodN
+$$
+具体数学证明省略。因此对于明文转换成的任意整数，通过公钥加密
+$$
+m^e \equiv cmodN
+$$
+之后传到server端，server端再通过私钥解密
+$$
+c^d \equiv mmodN
+$$
+这样就能得到原文对应的整数m了，再经过相应处理即可得到原来的明文。
+
+* 具体代码如下： 
+
+```python
+from Crypto.Util.number import *
+
+# 辗转相除法得到最大公约数
+def gcd(a,b):
+    if a%b == 0:
+        return b
+    else :
+        return gcd(b,a%b)
+
+# 通过最大公约数判断两者是否互质
+def isPrime(a,b):
+    if gcd(a,b) == 1:
+        return True
+    else :
+        return False
+
+# 求私钥
+def rsa_get_key(e, euler):
+    k = 1
+    while True:
+        if (((euler * k) + 1) % e) == 0:
+            return (euler * k + 1) // e
+        k += 1
+
+# 根据n,e计算d
+def getd(e):
+    euler = (p-1)*(q-1)
+    k = 1
+    while True:
+        if (((euler * k) + 1) % e) == 0:
+            return (euler * k + 1) // e
+        k += 1
+
+# 得到两大素数P、Q以及对应的N
+p = getPrime(32) 
+q = getPrime(32) 
+n = p*q
+
+# 遍历找到第一个与N互质的整数e
+e = 0
+while True:
+    e = getPrime(16)
+    if isPrime(n,e) == True :
+        break
+
+# 通过N，e求出d
+d = getd(e)
+
+# 将计算得到的N、e、d写入rsa存储文件
+filename = 'rsa_ned.txt'
+with open(filename, 'a') as file_object:
+    file_object.seek(0)
+    file_object.truncate()
+    file_object.write(str(n))
+    file_object.write('\n')
+    file_object.write(str(e))
+    file_object.write('\n')
+    file_object.write(str(d))
+```
+
+* server端的代码如下：
+
+```python
+filename = 'rsa_ned.txt'
+# 从rsa文件中读取N、e、d的值
+with open(filename, 'r') as f:
+    n = int(f.readline()[:-1])
+    e = int(f.readline()[:-1])
+    d = int(f.readline())
+
+'''
+print(n)
+print(e)
+print(d)
+'''
+
+# 用公钥加密
+def encrypt(a):
+    b = []
+    for i in range(len(a)):
+        b.append(pow(a[i],e,n))
+    # print(b)
+    return b
+
+# 用私钥解密
+def decrypt(a):
+    b = []
+    for i in range(len(a)):
+        b.append(pow(a[i],d,n))
+    # print(b)
+    return b
+```
+
+
+
+**对称加密部分使用了playfair算法。**
+
+* 我们使用的playfair算法以字符的ASCII码值为加密元，对相邻两个字符进行加密。
+
+考虑到输入字符集为ASCII码0~255的256个字符，正好可以平铺16*16的矩阵，我们以字符的ASCII码整除16为行值row，模16为列值col，可以得到每个字符对应的唯一坐标（row，col）。对任意输入根据以下规则进行加密：
+
+1. 一对一对取字母，如果最后只剩下一个字母，则不变换，直接放入加密串中；
+2. 如果一对字母中的两个字母相同，则不变换，直接放入加密串中；
+3. 如果字母对出现在方阵中的同一行或同一列，则对调这两个字母；
+4. 如果在正方形中能够找到以字母对（a，b）为顶点的矩形，则变换成矩形的另一对顶点，且与a同行的字母应在前面。
+
+出于对安全性的进一步考虑，在顺序的ASCII码矩阵中设定关键字session key，session key是一个由client和server协商的字符串，这个字符串中的字符将被排在ASCII码矩阵的最前面，这样可以使对应关系变得更为复杂。此外，我们认为可以让session key的长度也作为一个随机数，这样随机性更加高，安全性也随之上升。
+
+* 具体代码如下：
+
+```python
+from random import *
+import struct
+
+#生成一个n位的随机数
+def ran_num():
+    n = choice([110,120,130,140,150])
+    str = "".join([choice("0123456789ABCDEF") for i in range(n)])
+    return str
+
+#用生成的随机数来组成session key —— 同样只能用一次，保证对称密钥不会改变
+def skey():
+    a = ""
+    str = ran_num()
+    for i in range(len(str) // 2):
+        chr1 = int(str[i],16)
+        chr2 = int(str[i+1],16)
+        i = i + 2
+        str += chr(16*chr1+chr2)
+    return len(''.join(set(str))), ''.join(set(str))
+
+#构筑新的16*16映射表
+def get_s_arr(s_key):
+    b = list()
+    s = set()
+    for i in range(len(s_key)):
+        if not (s_key[i] in s): 
+            b.append(s_key[i])
+            s.add(s_key[i])
+    
+    for i in range(256):
+        if not chr(i) in s:
+            b.append(chr(i))
+            s.add(chr(i))
+    return b
+
+#加解密
+def pf_crypt(a,s_arr):
+    a = "".join([chr(x) for x in a])
+    b = []
+    i = 0
+    while i in range(len(a)):
+        #如果最后只剩下一个字母，则不变换，直接放入加密串中
+        if i+1 >= len(a):
+            b.append(a[i])
+            break
+        #如果一对字母中的两个字母相同，则不变换，直接放入加密串中
+        if a[i] == a[i+1]:
+            b.append(a[i])
+            b.append(a[i+1])
+            i += 2
+            continue
+        #如果字母对出现在方阵中的同一行或同一列，则只需简单对调这两个字母
+        # print("a[i] ", int(a[i]))
+        ind1 = s_arr.index(a[i])
+        ind2 = s_arr.index(a[i+1])
+        if (ind1 // 16 == ind2 // 16) or (ind1 % 16 == ind2 % 16):
+            b.append(a[i+1])
+            b.append(a[i])
+        #如果有以字母对为顶点的矩形,则该矩形的另一对顶点字母中，与a同行的字母应在前面
+        else:
+            b.append(s_arr[(ind1 // 16)*16 + (ind2 % 16)])
+            b.append(s_arr[(ind2 // 16)*16 + (ind1 % 16)])
+        i += 2
+    b = "".join(b)
+    b = struct.pack("!" + "B"*len(b), *[ord(x) for x in b])
+    return b
+
+# k_len, s_key = skey()
+# s_arr = get_s_arr(s_key)
+# # # import struct
+# # print([x.encode() for x in s_arr])
+# # print(a)
+# # a = b'\xfa\x1e'
+# a = b'\x02\x01'
+# a = b'\x02\x01\x14\x00beacons.gcp.gvt2.com\x01\xbb'
+# # # print(s_arr)
+# b = pf_crypt(a,s_arr)
+# c = pf_crypt(b,s_arr)
+# # print("".join(c).encode())
+# print(b)
+# print(c)
+```
+
+至此完成了对称加密部分的功能。
+
+* 具体通信过程为：client首先使用server提供的公钥将重要信息进行加密（此时传递的信息为用户名、密码、对称加密使用的密钥），server收到后用自己的私钥解密，进行身份的验证，并确定使用对称加密的密钥，回复一个用该密钥加密的连接成功的回复，然后就可以进行正常的数据传输了。
+
 
 
 ## 6 本地功能测试截图
@@ -142,3 +369,9 @@ SecSocks Client中配置有SecSocks Server的公钥，SecSocks握手请求使用
 ## 7 实验分工
 
 小组成员两人合作完成本次实验，邹振华同学主要负责SecSocks协议的实现，周炫柏同学主要负责加解密算法的设计与实现，两人共同完成了SecSocks协议的功能测试与验证
+
+
+
+## 8 附录
+
+[https://ctf-wiki.github.io/ctf-wiki/crypto/asymmetric/rsa/rsa_theory-zh/]: 
