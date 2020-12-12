@@ -1,5 +1,3 @@
-# socks5
-A toy socks 5 server written in Python
+# SecSocks
 
-
-https://rushter.com/blog/python-socks-server/
+A toy encrypted socks5-like proxy written in Python
