@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2020-12-12T11:59:39.645Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36" etag="gRYVzG8nDIfM1_57cNJ2" version="14.0.1" type="github">
+<mxfile host="app.diagrams.net" modified="2020-12-12T12:01:34.121Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36" etag="N7kUSIt1AbThl8OBQZrd" version="14.0.1" type="github">
   <diagram name="Page-1" id="13e1069c-82ec-6db2-03f1-153e76fe0fe0">
     <mxGraphModel dx="1038" dy="618" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" background="#ffffff" math="0" shadow="0">
       <root>
@@ -211,11 +211,29 @@
         <mxCell id="I0JvnG1YaRjptPo3mcJc-48" value="IP、端口" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
           <mxGeometry x="200" y="730" width="125" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="I0JvnG1YaRjptPo3mcJc-49" value="" style="endArrow=none;html=1;fontColor=#FF3333;" edge="1" parent="1">
+        <mxCell id="I0JvnG1YaRjptPo3mcJc-49" value="应用层数据" style="endArrow=none;html=1;fontColor=#FF3333;" edge="1" parent="1">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="160.94" y="800" as="sourcePoint" />
             <mxPoint x="380.94" y="800" as="targetPoint" />
           </mxGeometry>
+        </mxCell>
+        <mxCell id="I0JvnG1YaRjptPo3mcJc-50" value="应用层数据" style="endArrow=none;html=1;fontColor=#FF3333;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="415.00000000000006" y="800" as="sourcePoint" />
+            <mxPoint x="635" y="800" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="I0JvnG1YaRjptPo3mcJc-51" value="应用层数据" style="endArrow=none;html=1;fontColor=#FF3333;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="670" y="800" as="sourcePoint" />
+            <mxPoint x="890" y="800" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="I0JvnG1YaRjptPo3mcJc-52" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="422.5" y="550" width="205" height="280" as="geometry" />
+        </mxCell>
+        <mxCell id="I0JvnG1YaRjptPo3mcJc-53" value="session key加密" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=2;fontColor=#FF3333;" vertex="1" parent="1">
+          <mxGeometry x="475" y="550" width="100" height="20" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
